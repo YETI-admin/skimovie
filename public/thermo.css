@@ -115,15 +115,12 @@ h1 .small { font-size: calc(var(--u) * 1.9); line-height: 1; text-align: center;
   text-shadow: calc(var(--u) * 0.12) calc(var(--u) * 0.12) 0 var(--cream);
 }
 
-.give {
-  position: absolute; right: calc(var(--u) * 2.2); bottom: calc(var(--u) * 1.2); z-index: 3;
-  display: flex; align-items: center; gap: calc(var(--u) * 1);
-  background: var(--white); padding: calc(var(--u) * 0.6); border-radius: calc(var(--u) * 0.6);
-  border: calc(var(--u) * 0.25) solid var(--navy);
-  font-size: calc(var(--u) * 1.4); text-transform: uppercase; letter-spacing: 0.06em; line-height: 1.25;
+.url {
+  position: absolute; left: 30%; right: 0; bottom: calc(var(--u) * 0.6);
+  text-align: center; z-index: 3;
+  color: var(--rust-dark); font-weight: 700; text-transform: uppercase;
+  font-size: calc(var(--u) * 2); letter-spacing: 0.3em;
 }
-.give img { width: calc(var(--u) * 7.5); height: calc(var(--u) * 7.5); }
-.give strong { font-size: 1.15em; color: var(--rust-dark); text-transform: none; letter-spacing: 0.02em; }
 
 .offline {
   position: absolute; left: calc(var(--u) * 1); top: calc(var(--u) * 1);
