@@ -30,11 +30,35 @@
       <div class="big" id="tTotal">$0</div>
       <div class="muted">of <span id="tGoal"></span> goal · <span id="tPct"></span></div>
       <dl class="parts">
-        <div><dt>Give Lively campaign</dt><dd id="tGl"></dd></div>
+        <div><dt>Give Lively online</dt><dd id="tGl"></dd></div>
+        <div><dt>Give Lively offline</dt><dd id="tOff"></dd></div>
         <div><dt>Stripe (card reader etc.)</dt><dd id="tStripe"></dd></div>
         <div><dt>Cash &amp; cheques</dt><dd id="tCash"></dd></div>
         <div><dt>Manual adjustment</dt><dd id="tAdj"></dd></div>
       </dl>
+    </section>
+
+    <section class="card">
+      <h2>Give Lively</h2>
+      <p class="hint">Online gifts come in automatically from Stripe. Offline gifts entered in Give Lively don't go through Stripe, so enter their total here.</p>
+      <form id="offForm">
+        <div class="grid">
+          <label>Offline gifts in Give Lively — total ($) <input id="oAmount" inputmode="decimal" required></label>
+        </div>
+        <p class="hint" id="oInfo"></p>
+        <button type="submit">Save offline total</button>
+        <p class="err" id="offErr"></p>
+      </form>
+      <hr>
+      <form id="glForm">
+        <div class="grid">
+          <label>Check: "raised" amount shown on the Give Lively page ($) <input id="gAmount" inputmode="decimal" placeholder="4431" required></label>
+        </div>
+        <p class="hint">Open the <a href="https://secure.givelively.org/donate/yeti/powder-to-the-people-north-bend-ski-movie-night-fundraiser" target="_blank" rel="noopener">Give Lively page ↗</a>, type its "raised" number, and we'll compare.</p>
+        <button type="submit" class="secondary">Check</button>
+        <p id="gResult"></p>
+        <p class="err" id="glErr"></p>
+      </form>
     </section>
 
     <section class="card">

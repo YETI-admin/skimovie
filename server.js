@@ -30,6 +30,13 @@ const DEFAULTS = {
   event_start: env.EVENT_START || '2026-11-12T12:00:00-08:00',
   adjust_cents: '0',
   adjust_note: '',
+  offline_cents: '0',
+  offline_updated_at: '',
+  offline_updated_by: '',
+  glcheck_cents: '',
+  glcheck_at: '',
+  glcheck_by: '',
+  glcheck_diff_cents: '',
 };
 const getSetting = db.prepare('SELECT value FROM settings WHERE key = ?');
 const putSetting = db.prepare('INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value');
@@ -42,6 +49,16 @@ function settings() {
     eventStartMs: Date.parse(v('event_start')),
     adjustCents: parseInt(v('adjust_cents'), 10) || 0,
     adjustNote: v('adjust_note'),
+    // Offline gifts recorded in Give Lively (they never pass through Stripe).
+    offlineCents: parseInt(v('offline_cents'), 10) || 0,
+    offlineUpdatedAt: v('offline_updated_at') || null,
+    offlineUpdatedBy: v('offline_updated_by'),
+    // Last "what does the Give Lively page say?" check by an admin.
+    glCheckCents: v('glcheck_cents') === '' ? null : parseInt(v('glcheck_cents'), 10),
+    glCheckAt: v('glcheck_at') || null,
+    glCheckBy: v('glcheck_by'),
+    // Page figure minus (online + offline) at the moment of the check.
+    glCheckDiffCents: v('glcheck_diff_cents') === '' ? null : parseInt(v('glcheck_diff_cents'), 10),
   };
 }
 
@@ -116,21 +133,22 @@ function totals() {
   }
   const cashRows = liveCash.all();
   const cash = cashRows.reduce((sum, r) => sum + r.amount_cents, 0);
-  const total = givelively + stripeSum + cash + s.adjustCents;
+  const total = givelively + s.offlineCents + stripeSum + cash + s.adjustCents;
   return {
     totalCents: total, goalCents: s.goalCents,
-    givelivelyCents: givelively, stripeCents: stripeSum, cashCents: cash, adjustCents: s.adjustCents,
+    givelivelyCents: givelively, offlineCents: s.offlineCents,
+    stripeCents: stripeSum, cashCents: cash, adjustCents: s.adjustCents,
     gifts: gifts + cashRows.length,
   };
 }
 
-const insertSnapshot = db.prepare('INSERT OR IGNORE INTO snapshots (at, total_cents, givelively_cents, stripe_cents, cash_cents, adjust_cents) VALUES (?, ?, ?, ?, ?, ?)');
+const insertSnapshot = db.prepare('INSERT OR IGNORE INTO snapshots (at, total_cents, givelively_cents, stripe_cents, cash_cents, adjust_cents, offline_cents) VALUES (?, ?, ?, ?, ?, ?, ?)');
 let lastSnapshotTotal = null;
 function snapshot() {
   const t = totals();
   if (t.totalCents === lastSnapshotTotal) return;
   lastSnapshotTotal = t.totalCents;
-  insertSnapshot.run(now(), t.totalCents, t.givelivelyCents, t.stripeCents, t.cashCents, t.adjustCents);
+  insertSnapshot.run(now(), t.totalCents, t.givelivelyCents, t.stripeCents, t.cashCents, t.adjustCents, t.offlineCents);
 }
 
 // ---------- Admin sessions ----------
@@ -282,6 +300,37 @@ app.post('/api/admin/settings', requireAdmin, wrap(async (req, res) => {
   res.json({ ok: true });
 }));
 
+// Give Lively offline gifts: the total of offline donations recorded in Give Lively.
+app.post('/api/admin/offline', requireAdmin, (req, res) => {
+  const b = req.body || {};
+  const c = parseAmount(b.amount);
+  if (c == null || c < 0) return res.status(400).json({ error: 'Offline gifts must be $0 or more' });
+  const who = String(b.who || '').slice(0, 60);
+  putSetting.run('offline_cents', String(c));
+  putSetting.run('offline_updated_at', now());
+  putSetting.run('offline_updated_by', who);
+  audit.run(now(), who, 'offline', String(c));
+  snapshot();
+  res.json({ ok: true });
+});
+
+// Give Lively page check: an admin types the "raised" figure the Give Lively page shows,
+// and we compare it with online Give Lively gifts + offline gifts.
+app.post('/api/admin/glcheck', requireAdmin, (req, res) => {
+  const b = req.body || {};
+  const c = parseAmount(b.amount);
+  if (c == null || c < 0) return res.status(400).json({ error: 'Enter the amount shown on the Give Lively page' });
+  const who = String(b.who || '').slice(0, 60);
+  putSetting.run('glcheck_cents', String(c));
+  putSetting.run('glcheck_at', now());
+  putSetting.run('glcheck_by', who);
+  const t = totals();
+  const diff = c - (t.givelivelyCents + t.offlineCents);
+  putSetting.run('glcheck_diff_cents', String(diff));
+  audit.run(now(), who, 'glcheck', `page=${c} diff=${diff}`);
+  res.json({ ok: true, diffCents: diff });
+});
+
 const insertCash = db.prepare('INSERT INTO cash (amount_cents, kind, note, entered_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)');
 const updateCash = db.prepare('UPDATE cash SET amount_cents = ?, kind = ?, note = ?, entered_by = ?, updated_at = ? WHERE id = ?');
 const setCashDeleted = db.prepare('UPDATE cash SET deleted_at = ?, updated_at = ? WHERE id = ?');
@@ -371,10 +420,11 @@ app.get('/api/admin/export/cash.csv', requireAdmin, (req, res) => {
 });
 app.get('/api/admin/export/snapshots.csv', requireAdmin, (req, res) => {
   const rows = db.prepare('SELECT * FROM snapshots ORDER BY at').all().map((r) => ({
-    at_pacific: pacific(Date.parse(r.at)), total: dollars(r.total_cents), givelively: dollars(r.givelively_cents),
+    at_pacific: pacific(Date.parse(r.at)), total: dollars(r.total_cents), givelively_online: dollars(r.givelively_cents),
+    givelively_offline: dollars(r.offline_cents || 0),
     stripe: dollars(r.stripe_cents), cash: dollars(r.cash_cents), adjustment: dollars(r.adjust_cents),
   }));
-  sendCsv(res, 'total-history.csv', csv(rows, ['at_pacific', 'total', 'givelively', 'stripe', 'cash', 'adjustment']));
+  sendCsv(res, 'total-history.csv', csv(rows, ['at_pacific', 'total', 'givelively_online', 'givelively_offline', 'stripe', 'cash', 'adjustment']));
 });
 
 // Pages

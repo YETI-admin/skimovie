@@ -42,6 +42,10 @@
     $('tGoal').textContent = money(t.goalCents);
     $('tPct').textContent = Math.floor((t.totalCents / t.goalCents) * 100) + '%';
     $('tGl').textContent = money(t.givelivelyCents);
+    $('tOff').textContent = money(t.offlineCents);
+    if (document.activeElement !== $('oAmount')) $('oAmount').value = plain(s.offlineCents);
+    $('oInfo').textContent = s.offlineUpdatedAt ? `Last updated ${time(s.offlineUpdatedAt)}${s.offlineUpdatedBy ? ' by ' + s.offlineUpdatedBy : ''}.` : 'Not set yet.';
+    renderCheck(s);
     $('tStripe').textContent = money(t.stripeCents);
     $('tCash').textContent = money(t.cashCents);
     $('tAdj').textContent = money(t.adjustCents) + (s.adjustNote ? ` (${s.adjustNote})` : '');
@@ -78,6 +82,19 @@
       <tr><td>${time(c.created * 1000)}</td><td>${c.source === 'givelively' ? 'Give Lively' : 'Stripe' + (c.method === 'card_present' ? ' (reader)' : '')}</td>
       <td>${money(c.charge_cents)}</td><td><b>${money(c.cents)}</b></td><td>${esc(c.reason)}</td></tr>`).join('')
       || '<tr><td colspan="5" class="muted">No charges yet.</td></tr>';
+  }
+
+  // The Give Lively page rounds to whole dollars, so anything within $1 counts as a match.
+  function renderCheck(s) {
+    const el = $('gResult');
+    if (s.glCheckAt == null || s.glCheckDiffCents == null) { el.className = 'hint'; el.textContent = 'No check done yet.'; return; }
+    const when = `Checked ${time(s.glCheckAt)}${s.glCheckBy ? ' by ' + s.glCheckBy : ''} (page said ${money(s.glCheckCents)}).`;
+    const d = s.glCheckDiffCents;
+    if (Math.abs(d) < 100) { el.className = 'match ok'; el.textContent = `✓ Matches. ${when}`; return; }
+    el.className = 'match bad';
+    el.textContent = d > 0
+      ? `Give Lively shows ${money(d)} more than we have. Add it to the offline total (or wait a minute if a gift just came in). ${when}`
+      : `Give Lively shows ${money(-d)} less than we have. Check the offline total or recent refunds. ${when}`;
   }
 
   async function load() {
@@ -151,6 +168,20 @@
       if (b.dataset.restore) await api('POST', `/api/admin/cash/${b.dataset.restore}/restore`, { who: who() });
       load();
     } catch (err) { $('cashErr').textContent = err.message; }
+  });
+
+  $('offForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    $('offErr').textContent = '';
+    try { await api('POST', '/api/admin/offline', { amount: $('oAmount').value, who: who() }); $('oAmount').blur(); load(); }
+    catch (err) { $('offErr').textContent = err.message; }
+  });
+
+  $('glForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    $('glErr').textContent = '';
+    try { await api('POST', '/api/admin/glcheck', { amount: $('gAmount').value, who: who() }); $('gAmount').value = ''; load(); }
+    catch (err) { $('glErr').textContent = err.message; }
   });
 
   $('setForm').addEventListener('input', () => { settingsDirty = true; });

@@ -11,7 +11,9 @@ Hosted on Azure App Service `yeti-skimovie` (resource group `rg-skimovie`).
 
 ## How the total is counted
 
-Total = Give Lively campaign gifts + other Stripe payments since the event start + cash + manual adjustment.
+Total = Give Lively online gifts (from Stripe) + Give Lively offline gifts (entered in admin) + other Stripe payments since the event start + cash + manual adjustment.
+
+Offline gifts recorded in Give Lively never pass through Stripe or Salesforce, so an admin enters their total. The admin "Give Lively page check" compares the page's raised figure with online + offline and flags any gap.
 
 - **Give Lively gifts** are charged on Y.E.T.I.'s Stripe account and carry metadata.
   A charge with `gl_charge_id` is a Give Lively charge; it counts (any date) when
@@ -37,7 +39,7 @@ Cash entries are totals, not individual donors.
 | `STRIPE_SECRET_KEY` | Restricted key: Charges and Refunds = Read, Payment Intents = Read |
 | `STRIPE_WEBHOOK_SECRET` | `whsec_…` from the Stripe webhook endpoint |
 | `ADMIN_PIN` | Admin PIN |
-| `ADMIN_NAMES` | Comma-separated names for the "entered by" list |
+| `ADMIN_NAMES` | Comma-separated names for the "entered by" list (any letter case) |
 | `SESSION_SECRET` | Random string for signing admin cookies |
 | `EVENT_START` | Default `2026-11-12T12:00:00-08:00` (admin can change) |
 | `GOAL_CENTS` | Default `2000000` (admin can change) |
