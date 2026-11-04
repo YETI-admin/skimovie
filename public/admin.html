@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Thermometer Admin</title>
+  <link rel="stylesheet" href="/admin.css">
+</head>
+<body>
+  <header class="top">
+    <strong>Powder to the People · Admin</strong>
+    <span>
+      <a href="/" target="_blank">Open TV screen ↗</a>
+      <button class="link" id="logout" hidden>Log out</button>
+    </span>
+  </header>
+
+  <section id="login" class="card narrow" hidden>
+    <h2>Admin log in</h2>
+    <form id="loginForm">
+      <label>PIN <input id="pin" type="password" inputmode="numeric" autocomplete="current-password" required></label>
+      <button type="submit">Log in</button>
+      <p class="err" id="loginErr"></p>
+    </form>
+  </section>
+
+  <main id="app" hidden>
+    <section class="card totals">
+      <div class="big" id="tTotal">$0</div>
+      <div class="muted">of <span id="tGoal"></span> goal · <span id="tPct"></span></div>
+      <dl class="parts">
+        <div><dt>Give Lively campaign</dt><dd id="tGl"></dd></div>
+        <div><dt>Stripe (card reader etc.)</dt><dd id="tStripe"></dd></div>
+        <div><dt>Cash &amp; cheques</dt><dd id="tCash"></dd></div>
+        <div><dt>Manual adjustment</dt><dd id="tAdj"></dd></div>
+      </dl>
+    </section>
+
+    <section class="card">
+      <h2 id="cashTitle">Add cash</h2>
+      <form id="cashForm">
+        <div class="grid">
+          <label>Amount ($) <input id="cAmount" inputmode="decimal" placeholder="640.00" required></label>
+          <label>Type
+            <select id="cKind"><option value="cash">Cash</option><option value="cheque">Cheque</option><option value="other">Other</option></select>
+          </label>
+          <label>Your name <input id="cWho" list="names" required></label>
+          <label>Note <input id="cNote" placeholder="e.g. Door count 1" maxlength="120"></label>
+        </div>
+        <datalist id="names"></datalist>
+        <p class="hint">Enter totals, not individual donors. Don't put donor names in the note.</p>
+        <button type="submit" id="cSubmit">Add to thermometer</button>
+        <button type="button" class="secondary" id="cCancel" hidden>Cancel edit</button>
+        <p class="err" id="cashErr"></p>
+      </form>
+      <table class="list">
+        <thead><tr><th>Time</th><th>Amount</th><th>Type</th><th>Note</th><th>By</th><th></th></tr></thead>
+        <tbody id="cashRows"></tbody>
+      </table>
+    </section>
+
+    <section class="card">
+      <h2>Settings</h2>
+      <form id="setForm">
+        <div class="grid">
+          <label>Goal ($) <input id="sGoal" inputmode="decimal" required></label>
+          <label>Count Stripe payments from (Pacific) <input id="sStart" type="datetime-local" required></label>
+          <label>Manual adjustment ($, can be negative) <input id="sAdj" inputmode="decimal"></label>
+          <label>Adjustment note <input id="sAdjNote" maxlength="200" placeholder="e.g. Offline gifts entered in Give Lively"></label>
+        </div>
+        <button type="submit">Save settings</button>
+        <p class="err" id="setErr"></p>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Sources</h2>
+      <ul class="status" id="status"></ul>
+      <button type="button" id="syncBtn">Re-check Stripe now</button>
+      <span class="muted" id="syncMsg"></span>
+    </section>
+
+    <section class="card">
+      <h2>Exports (CSV)</h2>
+      <p>
+        <a class="btn" href="/api/admin/export/charges.csv">Stripe charges</a>
+        <a class="btn" href="/api/admin/export/cash.csv">Cash entries</a>
+        <a class="btn" href="/api/admin/export/snapshots.csv">Total history</a>
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Recent Stripe charges</h2>
+      <table class="list">
+        <thead><tr><th>Time</th><th>Source</th><th>Charged</th><th>Counted</th><th>Why</th></tr></thead>
+        <tbody id="chargeRows"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script src="/admin.js"></script>
+</body>
+</html>

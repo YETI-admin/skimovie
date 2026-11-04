@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Powder to the People</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Rye&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/thermo.css">
+</head>
+<body>
+  <main class="stage">
+    <img class="logo" src="/img/yeti-logo.png" alt="Y.E.T.I.">
+
+    <header class="title">
+      <div class="kicker">The 12<sup>th</sup> Annual</div>
+      <h1><span class="big">Powder</span><span class="row"><span class="small">to<br>the</span><span class="big">People</span></span></h1>
+    </header>
+
+    <img class="yeti" src="/img/yeti-cutout.png" alt="">
+
+    <section class="stats" aria-live="polite">
+      <div class="label">Raised tonight &amp; online</div>
+      <div class="amount" id="amount">$0</div>
+      <div class="goal">of <span id="goal">$20,000</span> goal</div>
+      <div class="pct" id="pct">0%</div>
+      <div class="reached" id="reached" hidden>Goal reached — thank you!</div>
+    </section>
+
+    <section class="thermo" aria-hidden="true">
+      <div class="ticks" id="ticks"></div>
+      <div class="tube"><div class="fill" id="fill"></div></div>
+      <div class="bulb"></div>
+    </section>
+
+    <div class="band"><span>A fundraiser for Y.E.T.I.</span></div>
+
+    <aside class="give">
+      <img src="/img/qr-skimovie.svg" alt="">
+      <div>Give now<br><strong>goyeti.org/skimovie</strong></div>
+    </aside>
+
+    <div class="offline" id="offline" hidden>Reconnecting…</div>
+  </main>
+  <script src="/thermo.js"></script>
+</body>
+</html>
