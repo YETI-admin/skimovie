@@ -11,12 +11,14 @@ const { chargeToRow, countRow, dollarsToCents } = require('./lib/classify');
 const env = process.env;
 const PORT = env.PORT || 3000;
 const DATA_DIR = env.DATA_DIR || path.join(__dirname, 'data');
-const STRIPE_KEY = env.STRIPE_SECRET_KEY || '';
-const WEBHOOK_SECRET = env.STRIPE_WEBHOOK_SECRET || '';
+const STRIPE_KEY = (env.STRIPE_SECRET_KEY || '').trim();
+const WEBHOOK_SECRET = (env.STRIPE_WEBHOOK_SECRET || '').trim();
 const ADMIN_PIN = env.ADMIN_PIN || '';
 const SESSION_SECRET = env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
 const CAMPAIGN_SLUG = env.GIVELIVELY_CAMPAIGN_SLUG || 'powder-to-the-people-north-bend-ski-movie-night-fundraiser';
-const ADMIN_NAMES = (env.ADMIN_NAMES || '').split(',').map((s) => s.trim()).filter(Boolean);
+// Setting names are case-sensitive on Linux; accept e.g. "Admin_Names" too.
+const envAnyCase = (name) => env[Object.keys(env).find((k) => k.toUpperCase() === name) || name];
+const ADMIN_NAMES = (envAnyCase('ADMIN_NAMES') || '').split(',').map((s) => s.trim()).filter(Boolean);
 const SYNC_EVERY_MS = 60 * 1000;
 
 const stripe = new Stripe(STRIPE_KEY || 'rk_not_configured', { maxNetworkRetries: 2, timeout: 20000 });
